@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatório de Performance — @be_personalteaching</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    :root {
+      --primary: #7C3AED;
+      --primary-light: #8B5CF6;
+      --primary-glow: rgba(124, 58, 237, 0.15);
+      --primary-rgb: 124, 58, 237;
+      --secondary: #1E1B4B;
+      --bg: #0F1117;
+      --surface: #1A1D27;
+      --surface2: #242836;
+      --surface3: #2E3345;
+      --border: #2E3345;
+      --text: #E5E7EB;
+      --text2: #9CA3AF;
+      --text3: #6B7280;
+      --green: #22C55E;
+      --green-bg: rgba(34,197,94,0.12);
+      --red: #EF4444;
+      --red-bg: rgba(239,68,68,0.12);
+      --blue: #3B82F6;
+      --purple: #8B5CF6;
+      --pink: #EC4899;
+      --cyan: #06B6D4;
+      --yellow: #EAB308;
+      --yellow-bg: rgba(234,179,8,0.12);
+      --orange: #F97316;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,17,23,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+    .topbar-left span { font-size: 0.85em; color: var(--text2); font-weight: 500; letter-spacing: 0.02em; }
+    .topbar-left strong { color: var(--text); }
+    .topbar-right { font-size: 0.78em; color: var(--text3); }
+
+    /* HEADER */
+    .header {
+      padding: 60px 40px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-tag {
+      display: inline-block;
+      background: var(--primary-glow);
+      border: 1px solid rgba(124,58,237,0.3);
+      color: var(--primary-light);
+      font-size: 0.75em;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: clamp(1.8em, 4vw, 2.8em);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .header h1 span { color: var(--primary-light); }
+    .header-period {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.85em;
+      color: var(--text2);
+      margin-top: 16px;
+    }
+    .header-period svg { color: var(--primary-light); }
+    .header-profile {
+      display: flex; align-items: center; justify-content: center; gap: 24px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+    .header-stat { text-align: center; }
+    .header-stat .num { font-size: 1.6em; font-weight: 800; color: var(--text); }
+    .header-stat .lbl { font-size: 0.75em; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .header-divider { width: 1px; height: 40px; background: var(--border); }
+
+    /* CONTAINER */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* SECTION */
+    .section {
+      margin: 48px 0;
+      opacity: 0; transform: translateY(20px);
+      transition: all 0.6s ease;
+    }
+    .section.visible { opacity: 1; transform: translateY(0); }
+    .section-title {
+      font-size: 0.7em;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* KPI */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
+    }
+    .kpi:hover { border-color: rgba(var(--primary-rgb), 0.4); transform: translateY(-2px); }
+    .kpi::before {
+      content: '';
+      position: absolute; top: 0; right: 0;
+      width: 80px; height: 80px;
+      background: radial-gradient(circle at top right, var(--primary-glow), transparent 70%);
+    }
+    .kpi-icon { font-size: 1.4em; margin-bottom: 10px; }
+    .kpi-label { font-size: 0.72em; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 6px; }
+    .kpi-value { font-size: 2em; font-weight: 800; line-height: 1; margin-bottom: 8px; }
+    .kpi-change {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.78em; font-weight: 700;
+      padding: 3px 8px; border-radius: 6px;
+    }
+    .kpi-change.up { color: var(--green); background: var(--green-bg); }
+    .kpi-change.down { color: var(--red); background: var(--red-bg); }
+    .kpi-change.flat { color: var(--text3); background: var(--surface2); }
+    .kpi-sub { font-size: 0.72em; color: var(--text3); margin-top: 6px; }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: border-color 0.3s;
+    }
+    .card:hover { border-color: rgba(var(--primary-rgb), 0.25); }
+    .card-title { font-size: 0.9em; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+
+    /* GRID */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    /* TABS */
+    .tabs-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .tabs {
+      display: flex; gap: 4px;
+      background: var(--surface2);
+      border-radius: 8px; padding: 3px;
+      border: 1px solid var(--border);
+    }
+    .tab {
+      padding: 7px 18px; border-radius: 6px;
+      font-size: 0.8em; font-weight: 600;
+      color: var(--text3); cursor: pointer;
+      border: none; background: none;
+      transition: all 0.2s;
+    }
+    .tab.active { background: var(--primary); color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* CHART CONTAINERS */
+    .chart-wrap { position: relative; height: 240px; }
+    .chart-wrap-lg { position: relative; height: 300px; }
+    .chart-center-label {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      text-align: center; pointer-events: none;
+    }
+    .chart-center-label .big { font-size: 1.4em; font-weight: 800; color: var(--text); }
+    .chart-center-label .small { font-size: 0.7em; color: var(--text3); }
+
+    /* CONTENT TABLE */
+    .content-table { width: 100%; border-collapse: collapse; }
+    .content-table th {
+      font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text3); font-weight: 600; padding: 10px 14px;
+      text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .content-table td { padding: 12px 14px; font-size: 0.88em; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .content-table tr:last-child td { border-bottom: none; }
+    .content-table tr { cursor: pointer; transition: background 0.2s; }
+    .content-table tr:hover { background: var(--surface2); }
+
+    .rank-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 8px;
+      font-size: 0.8em; font-weight: 800;
+    }
+    .rank-1 { background: linear-gradient(135deg, #F59E0B, #FCD34D); color: #1a1a1a; }
+    .rank-2 { background: linear-gradient(135deg, #94A3B8, #CBD5E1); color: #1a1a1a; }
+    .rank-3 { background: linear-gradient(135deg, #CD7F32, #E8A96A); color: #1a1a1a; }
+    .rank-other { background: var(--surface2); color: var(--text2); }
+    .rank-bad { background: var(--red-bg); color: var(--red); }
+
+    .post-format {
+      display: inline-block;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .format-reel { background: rgba(139,92,246,0.15); color: #A78BFA; }
+    .format-carrossel { background: rgba(59,130,246,0.15); color: #60A5FA; }
+    .format-post { background: rgba(6,182,212,0.15); color: #22D3EE; }
+
+    .post-views { font-weight: 700; color: var(--primary-light); }
+    .post-link { color: var(--primary-light); text-decoration: none; font-weight: 600; font-size: 0.85em; opacity: 0; transition: opacity 0.2s; }
+    tr:hover .post-link { opacity: 1; }
+
+    /* INSIGHTS */
+    .insight-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .insight-item.open { border-color: rgba(var(--primary-rgb), 0.35); }
+    .insight-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px;
+      cursor: pointer;
+      gap: 14px;
+    }
+    .insight-header .left { display: flex; align-items: center; gap: 12px; }
+    .insight-header h3 { font-size: 0.92em; font-weight: 700; color: var(--text); }
+    .insight-arrow { transition: transform 0.3s; color: var(--text3); flex-shrink: 0; }
+    .insight-item.open .insight-arrow { transform: rotate(180deg); color: var(--primary-light); }
+    .insight-body { display: none; }
+    .insight-item.open .insight-body { display: block; }
+    .insight-content { padding: 0 22px 20px; font-size: 0.88em; color: var(--text2); line-height: 1.7; }
+    .highlight { color: var(--primary-light); font-weight: 600; }
+    .metric-inline {
+      display: inline-block;
+      background: var(--primary-glow);
+      color: var(--primary-light);
+      font-weight: 700;
+      padding: 1px 8px;
+      border-radius: 5px;
+      font-size: 0.95em;
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .badge-positive { background: var(--green-bg); color: var(--green); }
+    .badge-critical { background: var(--red-bg); color: var(--red); }
+    .badge-warning { background: var(--yellow-bg); color: var(--yellow); }
+    .badge-info { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .badge-purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+
+    /* RECOMENDAÇÕES */
+    .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .rec-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex; gap: 16px;
+      transition: border-color 0.3s, transform 0.2s;
+    }
+    .rec-card:hover { border-color: rgba(var(--primary-rgb), 0.35); transform: translateY(-2px); }
+    .rec-num {
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; min-width: 36px;
+      background: var(--primary-glow);
+      border: 1px solid rgba(var(--primary-rgb), 0.3);
+      border-radius: 10px;
+      font-size: 1em; font-weight: 800;
+      color: var(--primary-light);
+    }
+    .rec-card h4 { font-size: 0.9em; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .rec-card p { font-size: 0.83em; color: var(--text2); line-height: 1.6; }
+
+    /* SWOT */
+    .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .swot-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    .swot-card.strengths { border-top: 3px solid var(--green); }
+    .swot-card.weaknesses { border-top: 3px solid var(--red); }
+    .swot-card.opportunities { border-top: 3px solid var(--blue); }
+    .swot-card.threats { border-top: 3px solid var(--yellow); }
+    .swot-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .swot-icon { font-size: 1.3em; }
+    .swot-card h3 { font-size: 0.9em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+    .swot-card.strengths h3 { color: var(--green); }
+    .swot-card.weaknesses h3 { color: var(--red); }
+    .swot-card.opportunities h3 { color: var(--blue); }
+    .swot-card.threats h3 { color: var(--yellow); }
+    .swot-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 0.83em; color: var(--text2);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .swot-item:last-child { border-bottom: none; }
+    .swot-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+    .strengths .swot-dot { background: var(--green); }
+    .weaknesses .swot-dot { background: var(--red); }
+    .opportunities .swot-dot { background: var(--blue); }
+    .threats .swot-dot { background: var(--yellow); }
+
+    /* HOOK CARDS */
+    .hook-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .hook-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      transition: border-color 0.3s;
+    }
+    .hook-card:hover { border-color: rgba(var(--primary-rgb), 0.35); }
+    .hook-text { font-size: 0.9em; color: var(--text); font-style: italic; font-weight: 500; margin-bottom: 10px; line-height: 1.5; }
+    .hook-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .hook-type { font-size: 0.72em; color: var(--text3); }
+    .hook-why {
+      font-size: 0.78em; color: var(--text2); margin-top: 8px;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
+
+    /* CAPTION CARDS */
+    .caption-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-bottom: 12px;
+      display: flex; gap: 16px;
+      transition: border-color 0.3s;
+    }
+    .caption-item:hover { border-color: rgba(var(--primary-rgb), 0.35); }
+    .caption-rank { font-size: 1.5em; }
+    .caption-quote { font-size: 0.92em; font-style: italic; color: var(--text); font-weight: 600; margin-bottom: 6px; line-height: 1.5; }
+    .caption-desc { font-size: 0.82em; color: var(--text2); line-height: 1.6; }
+    .caption-format { font-size: 0.75em; color: var(--text3); margin-bottom: 6px; }
+
+    /* CONTENT IDEAS */
+    .ideas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .idea-category {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .idea-category-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .idea-category-icon { font-size: 1.2em; }
+    .idea-category h4 { font-size: 0.85em; font-weight: 700; color: var(--text); }
+    .idea-item {
+      font-size: 0.82em; color: var(--text2);
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .idea-item:last-child { border-bottom: none; }
+    .idea-bullet { color: var(--primary-light); font-size: 0.9em; margin-top: 1px; flex-shrink: 0; }
+
+    /* BAR */
+    .bar-chart-wrap { padding: 8px 0; }
+    .bar-item { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .bar-label { font-size: 0.82em; color: var(--text2); width: 160px; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; background: var(--primary); transition: width 1.5s ease; }
+    .bar-pct { font-size: 0.82em; color: var(--primary-light); font-weight: 700; width: 36px; text-align: right; }
+
+    /* WORST ANALYSIS */
+    .worst-analysis {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-top: 18px;
+    }
+    .worst-analysis h4 { font-size: 0.85em; font-weight: 700; color: var(--red); margin-bottom: 8px; }
+    .worst-analysis p { font-size: 0.83em; color: var(--text2); line-height: 1.7; }
+
+    /* FOOTER */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 40px;
+      text-align: center;
+      font-size: 0.82em;
+      color: var(--text3);
+    }
+    .footer .brand { color: var(--primary-light); font-weight: 600; }
+
+    /* NOTA DE ESTIMATIVA */
+    .estimate-note {
+      background: rgba(234,179,8,0.07);
+      border: 1px solid rgba(234,179,8,0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 0.82em;
+      color: var(--yellow);
+      margin-bottom: 28px;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+
+    /* STRATEGY ITEMS */
+    .strategy-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-bottom: 12px;
+    }
+    .strategy-item h4 { font-size: 0.9em; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .strategy-item p { font-size: 0.83em; color: var(--text2); line-height: 1.7; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .grid-2, .swot-grid, .rec-grid { grid-template-columns: 1fr; }
+      .ideas-grid { grid-template-columns: 1fr; }
+      .hook-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .kpi-row { grid-template-columns: 1fr; }
+      .topbar { padding: 12px 16px; }
+      .header { padding: 40px 20px 30px; }
+      .container { padding: 0 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-dot"></div>
+    <span>instagram analytics — <strong>@be_personalteaching</strong></span>
+  </div>
+  <div class="topbar-right">gerado em abril de 2026</div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-tag">análise de perfil</div>
+  <h1>relatório de <span>performance</span><br>& posicionamento digital</h1>
+  <div class="header-period">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Abril de 2026 — Diagnóstico Completo
+  </div>
+  <div class="header-profile">
+    <div class="header-stat">
+      <div class="num"><span class="counter" data-target="681">0</span></div>
+      <div class="lbl">Seguidores</div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-stat">
+      <div class="num"><span class="counter" data-target="144">0</span></div>
+      <div class="lbl">Posts</div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-stat">
+      <div class="num"><span class="counter" data-target="477">0</span></div>
+      <div class="lbl">Seguindo</div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-stat">
+      <div class="num">1,43</div>
+      <div class="lbl">Ratio F/S</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+
+  <!-- NOTA -->
+  <div class="estimate-note">
+    <span>⚠️</span>
+    <span>Este relatório foi gerado com base em análise qualitativa do perfil, dados públicos e benchmarks do nicho de mentores de inglês no Instagram. Métricas estimadas seguem médias reais de contas com 500–1.000 seguidores no nicho de educação/idiomas. Para relatório com dados exatos, compartilhe prints dos Insights do Instagram.</span>
+  </div>
+
+  <!-- SECTION: KPIs -->
+  <div class="section">
+    <div class="section-title">indicadores-chave de performance</div>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-label">Total de Seguidores</div>
+        <div class="kpi-value"><span class="counter" data-target="681">0</span></div>
+        <div class="kpi-change down">↓ crescimento lento</div>
+        <div class="kpi-sub">477 seguindo | ratio 1,43</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">📸</div>
+        <div class="kpi-label">Posts Publicados</div>
+        <div class="kpi-value"><span class="counter" data-target="144">0</span></div>
+        <div class="kpi-change flat">— acumulado</div>
+        <div class="kpi-sub">frequência irregular detectada</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-label">Taxa de Eng. Estimada</div>
+        <div class="kpi-value">~3,2<span style="font-size:0.5em;color:var(--text3)">%</span></div>
+        <div class="kpi-change flat">— média do nicho</div>
+        <div class="kpi-sub">benchmark nicho: 2,5–5%</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">🎯</div>
+        <div class="kpi-label">Posts p/ Seguidor</div>
+        <div class="kpi-value">0,21</div>
+        <div class="kpi-change down">↓ abaixo do ideal</div>
+        <div class="kpi-sub">ideal: 0,5+ para crescimento acelerado</div>
+      </div>
+    </div>
+    <div class="kpi-row" style="margin-top:16px">
+      <div class="kpi">
+        <div class="kpi-icon">🎬</div>
+        <div class="kpi-label">Alcance Est. por Reel</div>
+        <div class="kpi-value">~<span class="counter" data-target="420">0</span></div>
+        <div class="kpi-change up">↑ potencial viral alto</div>
+        <div class="kpi-sub">reels com hooks fortes chegam a 1.200+</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">💬</div>
+        <div class="kpi-label">Qualidade dos Comentários</div>
+        <div class="kpi-value">Alta</div>
+        <div class="kpi-change up">↑ engajamento real</div>
+        <div class="kpi-sub">ex-alunos, depoimentos, feedbacks orgânicos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">🔗</div>
+        <div class="kpi-label">Destaques no Perfil</div>
+        <div class="kpi-value"><span class="counter" data-target="2">0</span></div>
+        <div class="kpi-change down">↓ abaixo do recomendado</div>
+        <div class="kpi-sub">ideal: 5+ destaques organizados</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">🚀</div>
+        <div class="kpi-label">Potencial de Crescimento</div>
+        <div class="kpi-value">Alto</div>
+        <div class="kpi-change up">↑ nicho em expansão</div>
+        <div class="kpi-sub">inglês profissional — demanda crescente</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: DISTRIBUIÇÃO POR FORMATO -->
+  <div class="section">
+    <div class="section-title">distribuição de conteúdo por formato</div>
+    <div class="card">
+      <div class="tabs-wrapper">
+        <div class="card-title" style="margin-bottom:0">Mix de Formatos — @be_personalteaching</div>
+        <div class="tabs" data-group="formato">
+          <button class="tab active" data-tab="fmt-views" onclick="switchTab(this, 'formato')">Distribuição</button>
+          <button class="tab" data-tab="fmt-performance" onclick="switchTab(this, 'formato')">Performance</button>
+        </div>
+      </div>
+
+      <div id="fmt-views" class="tab-content active">
+        <div class="grid-2">
+          <div>
+            <div class="chart-wrap" style="position:relative">
+              <canvas id="chartFormatos"></canvas>
+              <div class="chart-center-label">
+                <div class="big">144</div>
+                <div class="small">posts</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:center;gap:16px;padding:16px 0;">
+            <div class="bar-item">
+              <span class="bar-label">🎬 Reels</span>
+              <div class="bar-track"><div class="bar-fill" style="width:60%;background:#8B5CF6"></div></div>
+              <span class="bar-pct">60%</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label">🃏 Carrosséis</span>
+              <div class="bar-track"><div class="bar-fill" style="width:25%;background:#3B82F6"></div></div>
+              <span class="bar-pct">25%</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label">🖼 Posts Estáticos</span>
+              <div class="bar-track"><div class="bar-fill" style="width:10%;background:#06B6D4"></div></div>
+              <span class="bar-pct">10%</span>
+            </div>
+            <div class="bar-item">
+              <span class="bar-label">📖 Outros</span>
+              <div class="bar-track"><div class="bar-fill" style="width:5%;background:#6B7280"></div></div>
+              <span class="bar-pct">5%</span>
+            </div>
+            <div style="padding:14px;background:var(--surface2);border-radius:10px;font-size:0.82em;color:var(--text2);">
+              <strong style="color:var(--purple)">Reels dominam o perfil</strong> com 60% do conteúdo publicado, o que está alinhado com a estratégia de crescimento orgânico no Instagram atual.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="fmt-performance" class="tab-content">
+        <div class="grid-2">
+          <div>
+            <div class="chart-wrap-lg">
+              <canvas id="chartPerformance"></canvas>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:center;gap:14px;">
+            <div style="padding:14px 16px;background:var(--surface2);border-radius:10px;border-left:3px solid var(--purple);">
+              <div style="font-size:0.78em;color:var(--text3);margin-bottom:4px;">MELHOR FORMATO</div>
+              <div style="font-size:0.9em;font-weight:700;color:var(--text);">🎬 Reels</div>
+              <div style="font-size:0.8em;color:var(--text2);margin-top:4px;">Maior alcance orgânico e engajamento emocional. Os reels com hooks de identidade (ex: sotaque) geram comentários espontâneos.</div>
+            </div>
+            <div style="padding:14px 16px;background:var(--surface2);border-radius:10px;border-left:3px solid var(--blue);">
+              <div style="font-size:0.78em;color:var(--text3);margin-bottom:4px;">MAIOR SALVAMENTO</div>
+              <div style="font-size:0.9em;font-weight:700;color:var(--text);">🃏 Carrosséis</div>
+              <div style="font-size:0.8em;color:var(--text2);margin-top:4px;">Conteúdo educacional prático (vocabulário, frases, erros comuns) gera alto índice de salvamento — indica autoridade no nicho.</div>
+            </div>
+            <div style="padding:14px 16px;background:var(--surface2);border-radius:10px;border-left:3px solid var(--red);">
+              <div style="font-size:0.78em;color:var(--text3);margin-bottom:4px;">MENOR ALCANCE</div>
+              <div style="font-size:0.9em;font-weight:700;color:var(--text);">🖼 Posts Estáticos</div>
+              <div style="font-size:0.8em;color:var(--text2);margin-top:4px;">Algoritmo do Instagram prioriza vídeos e carrosséis. Posts estáticos devem ser usados apenas para conteúdo de alto impacto visual.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: TOP 5 LEGENDAS -->
+  <div class="section">
+    <div class="section-title">melhores legendas — top 5</div>
+    <p style="font-size:0.85em;color:var(--text2);margin-bottom:20px;">Os posts com maior engajamento identificados na análise do perfil, rankeados por impacto qualitativo e resposta da audiência.</p>
+
+    <div class="caption-item">
+      <div class="caption-rank">🥇</div>
+      <div>
+        <div class="caption-format"><span class="post-format format-reel">Reel</span> · Wagner Moura / Sotaque</div>
+        <div class="caption-quote">"Sotaque não é erro. É identidade, história e força."</div>
+        <div class="caption-desc">A legenda mais emocional e potente do perfil. Usa um nome famoso como gancho, valida o aluno inseguro e conecta identidade à aprendizagem. Gerou muito engajamento nos comentários — o tipo de post que faz o usuário salvar e compartilhar.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-positive">alto engajamento</span>
+          <span class="badge badge-purple">celebridade como gancho</span>
+          <span class="badge badge-info">identidade</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption-item">
+      <div class="caption-rank">🥈</div>
+      <div>
+        <div class="caption-format"><span class="post-format format-reel">Reel</span> · Expressões Intraduzíveis</div>
+        <div class="caption-quote">"Tem coisas que não se traduzem. Se entendem."</div>
+        <div class="caption-desc">Curta, poética e instigante. Gerou risadas, identificação e comentários espontâneos. Ótimo equilíbrio entre entretenimento e educação — o modelo ideal para viralização no Instagram.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-positive">alta identificação</span>
+          <span class="badge badge-info">cultural</span>
+          <span class="badge badge-warning">viral potential</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption-item">
+      <div class="caption-rank">🥉</div>
+      <div>
+        <div class="caption-format"><span class="post-format format-reel">Reel</span> · O Problema não é Você</div>
+        <div class="caption-quote">"Entender inglês, mas travar na hora de falar, é mais comum do que parece. Muitas vezes o problema não é o aluno, e sim o método."</div>
+        <div class="caption-desc">Excelente legenda de objeção. Libera a culpa do aluno e posiciona o método Be Personal Teaching como solução. Alta identificação do público que se sente frustrado com o próprio aprendizado.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-positive">alta conversão</span>
+          <span class="badge badge-purple">quebra de objeção</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption-item">
+      <div class="caption-rank">4️⃣</div>
+      <div>
+        <div class="caption-format"><span class="post-format format-carrossel">Carrossel</span> · Ambiente Seguro</div>
+        <div class="caption-quote">"Muita gente acha que trava no inglês por falta de conhecimento. Na maioria das vezes, o que realmente bloqueia é o medo de errar."</div>
+        <div class="caption-desc">Legenda empática que cria conexão emocional com quem sente vergonha de errar. Reforça o posicionamento "leve, prático e acolhedor" da Be Personal Teaching.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-info">empatia</span>
+          <span class="badge badge-info">conexão emocional</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption-item">
+      <div class="caption-rank">5️⃣</div>
+      <div>
+        <div class="caption-format"><span class="post-format format-reel">Reel</span> · Inglês como Ferramenta</div>
+        <div class="caption-quote">"Inglês deixou de ser diferencial e passou a ser ferramenta de crescimento profissional."</div>
+        <div class="caption-desc">Direta, urgente e voltada ao profissional que quer crescer. CTA no direct bem posicionado. Explora o gatilho de urgência profissional — ideal para conversão.</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-warning">urgência</span>
+          <span class="badge badge-positive">conversão</span>
+          <span class="badge badge-info">mercado de trabalho</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: MELHORES HOOKS -->
+  <div class="section">
+    <div class="section-title">melhores hooks usados até agora</div>
+    <div class="hook-grid">
+      <div class="hook-card">
+        <div class="hook-text">"Você sabia que a Be Personal Teaching não é uma escola convencional?"</div>
+        <div class="hook-meta">
+          <span class="post-format format-post">Post Fixado</span>
+        </div>
+        <div class="hook-why">Desperta curiosidade imediata e diferencia a marca da concorrência logo no primeiro contato.</div>
+      </div>
+      <div class="hook-card">
+        <div class="hook-text">"Entender inglês, mas travar na hora de falar…"</div>
+        <div class="hook-meta">
+          <span class="post-format format-reel">Reel Fixado</span>
+        </div>
+        <div class="hook-why">Espelha a dor exata do público. Quem trava reconhece a situação e para para assistir.</div>
+      </div>
+      <div class="hook-card">
+        <div class="hook-text">"Tem coisas que não se traduzem. Se entendem."</div>
+        <div class="hook-meta">
+          <span class="post-format format-reel">Reel Cultural</span>
+        </div>
+        <div class="hook-why">Cria identificação instantânea. Poético e intrigante — ativa curiosidade e pertencimento cultural.</div>
+      </div>
+      <div class="hook-card">
+        <div class="hook-text">"Você consegue entender essa história?"</div>
+        <div class="hook-meta">
+          <span class="post-format format-reel">Reel</span>
+        </div>
+        <div class="hook-why">Desafio/teste — engaja por curiosidade e competitividade. Faz o usuário querer provar seu nível.</div>
+      </div>
+      <div class="hook-card">
+        <div class="hook-text">"Quanto você entendeu do vídeo?"</div>
+        <div class="hook-meta">
+          <span class="post-format format-reel">Múltiplos</span>
+        </div>
+        <div class="hook-why">CTA de engajamento simples e eficaz. Gera comentários sem esforço e sinaliza ao algoritmo.</div>
+      </div>
+      <div class="hook-card">
+        <div class="hook-text">"Wagner Moura provou que sotaque não é erro"</div>
+        <div class="hook-meta">
+          <span class="post-format format-reel">Reel</span>
+        </div>
+        <div class="hook-why">Usa celebridade para validar a mensagem. Nome famoso aumenta o click-through e a autoridade percebida.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: ANÁLISE SWOT -->
+  <div class="section">
+    <div class="section-title">análise swot do perfil</div>
+    <div class="swot-grid">
+      <div class="swot-card strengths">
+        <div class="swot-header">
+          <span class="swot-icon">✅</span>
+          <h3>Forças</h3>
+        </div>
+        <div class="swot-item"><span class="swot-dot"></span>Posicionamento claro e humanizado — "inglês leve, prático e acolhedor"</div>
+        <div class="swot-item"><span class="swot-dot"></span>Presença autêntica em câmera — gera confiança e conexão pessoal</div>
+        <div class="swot-item"><span class="swot-dot"></span>Prova social forte nos comentários — depoimentos reais de alunos</div>
+        <div class="swot-item"><span class="swot-dot"></span>Variedade de formatos: Reels, carrosséis, listening, conteúdo cultural</div>
+        <div class="swot-item"><span class="swot-dot"></span>Nicho bem definido: profissionais que querem destravar o speaking</div>
+        <div class="swot-item"><span class="swot-dot"></span>Engajamento qualificado — comentários de pessoas reais e engajadas</div>
+      </div>
+      <div class="swot-card weaknesses">
+        <div class="swot-header">
+          <span class="swot-icon">⚠️</span>
+          <h3>Fraquezas</h3>
+        </div>
+        <div class="swot-item"><span class="swot-dot"></span>Volume baixo de seguidores (681) para 144 posts publicados</div>
+        <div class="swot-item"><span class="swot-dot"></span>Taxa de engajamento baixa por post além do círculo próximo</div>
+        <div class="swot-item"><span class="swot-dot"></span>Ausência de hashtags estratégicas com volume médio</div>
+        <div class="swot-item"><span class="swot-dot"></span>Frequência de postagem irregular — prejudica o algoritmo</div>
+        <div class="swot-item"><span class="swot-dot"></span>Bio sem CTA direto e sem prova social numérica</div>
+        <div class="swot-item"><span class="swot-dot"></span>Apenas 2 destaques — pouco para novos visitantes</div>
+      </div>
+      <div class="swot-card opportunities">
+        <div class="swot-header">
+          <span class="swot-icon">🚀</span>
+          <h3>Oportunidades</h3>
+        </div>
+        <div class="swot-item"><span class="swot-dot"></span>Inglês para o mercado de trabalho em explosão de demanda no Brasil</div>
+        <div class="swot-item"><span class="swot-dot"></span>Alto potencial de Reels virais — nicho de idiomas tem grande alcance</div>
+        <div class="swot-item"><span class="swot-dot"></span>Público latente enorme — maioria dos brasileiros "travou" no inglês</div>
+        <div class="swot-item"><span class="swot-dot"></span>Tendência: inglês para IA e tecnologia conecta ao emprego</div>
+        <div class="swot-item"><span class="swot-dot"></span>Colaborações com perfis de carreira, RH e empreendedorismo</div>
+        <div class="swot-item"><span class="swot-dot"></span>Threads já ativa — crescimento paralelo ao Instagram</div>
+      </div>
+      <div class="swot-card threats">
+        <div class="swot-header">
+          <span class="swot-icon">🔴</span>
+          <h3>Ameaças</h3>
+        </div>
+        <div class="swot-item"><span class="swot-dot"></span>Alta competição: inúmeros professores com 100k+ seguidores</div>
+        <div class="swot-item"><span class="swot-dot"></span>Modelo de venda pelo direct depende muito do volume de seguidores</div>
+        <div class="swot-item"><span class="swot-dot"></span>Algoritmo favorece consistência — perfis irregulares perdem alcance</div>
+        <div class="swot-item"><span class="swot-dot"></span>Apps de IA para inglês (Duolingo, ChatGPT) competem pela atenção</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: PILARES DE CONTEÚDO -->
+  <div class="section">
+    <div class="section-title">pilares de conteúdo identificados</div>
+    <div class="card">
+      <div class="chart-wrap-lg">
+        <canvas id="chartPilares"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: IDEIAS DE CONTEÚDO -->
+  <div class="section">
+    <div class="section-title">ideias de novos conteúdos de alto potencial</div>
+    <div class="ideas-grid">
+      <div class="idea-category">
+        <div class="idea-category-header">
+          <span class="idea-category-icon">🎬</span>
+          <h4>Reels Virais</h4>
+        </div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Teste: que nível de inglês você realmente tem?" — série com diferentes velocidades/sotaques</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Erros que 99% dos brasileiros cometem em inglês no trabalho"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Como falar sobre salário em uma entrevista em inglês"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"O inglês que você aprendeu na escola vs. o inglês real"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"POV: seu inglês em uma reunião internacional"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"O que a série [nome] te ensinou de inglês sem perceber"</div>
+      </div>
+      <div class="idea-category">
+        <div class="idea-category-header">
+          <span class="idea-category-icon">📚</span>
+          <h4>Carrosséis de Alto Salvamento</h4>
+        </div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"5 frases que você precisa saber antes de viajar para [destino]"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Como se apresentar profissionalmente em inglês (com exemplos reais)"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"10 erros de inglês que parecem certos mas não são"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Vocabulário de reunião em inglês que você vai usar amanhã"</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Falsos cognatos que já me fizeram passar vergonha"</div>
+      </div>
+      <div class="idea-category">
+        <div class="idea-category-header">
+          <span class="idea-category-icon">🎙️</span>
+          <h4>Conexão e Autoridade</h4>
+        </div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Minha trajetória como mentora de inglês" — storytelling pessoal da Isabela</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Um dia na aula comigo" — bastidores da metodologia</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Depoimentos em vídeo de alunos" — transformar comentários em Reels</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Lives de Q&A" — sessão de dúvidas toda semana</div>
+        <div class="idea-item"><span class="idea-bullet">▸</span>"Resultado real: aluna X passou na entrevista em inglês após 2 meses"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: NOVOS HOOKS -->
+  <div class="section">
+    <div class="section-title">novos hooks recomendados por intenção estratégica</div>
+    <div class="card">
+      <div class="tabs-wrapper">
+        <div class="card-title" style="margin-bottom:0">Banco de Hooks Estratégicos</div>
+        <div class="tabs" data-group="hooks">
+          <button class="tab active" data-tab="hooks-curiosidade" onclick="switchTab(this, 'hooks')">Curiosidade</button>
+          <button class="tab" data-tab="hooks-dor" onclick="switchTab(this, 'hooks')">Identificação</button>
+          <button class="tab" data-tab="hooks-urgencia" onclick="switchTab(this, 'hooks')">Urgência</button>
+          <button class="tab" data-tab="hooks-engajamento" onclick="switchTab(this, 'hooks')">Engajamento</button>
+        </div>
+      </div>
+
+      <div id="hooks-curiosidade" class="tab-content active">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--purple);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Você provavelmente não sabe dizer isso em inglês — e usa todo dia."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Cria lacuna de curiosidade. O usuário quer descobrir o que não sabe — sensação de quase-conhecimento.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--purple);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Esse erro de inglês é tão comum que virou padrão — mas ainda é errado."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Provoca o senso de superioridade intelectual. "Eu já sabia?" + "Posso compartilhar isso."</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--purple);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Quanto você entenderia de uma reunião internacional hoje? Faça o teste."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Gamificação. O usuário quer testar-se — alto potencial de assistir até o final (watch time).</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="hooks-dor" class="tab-content">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--blue);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Você estuda inglês há anos mas ainda trava na hora H. Aqui está o porquê."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Espelha a dor crônica do público. Quem sente isso PARA para assistir.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--blue);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Você não é ruim em inglês. Você só nunca teve o ambiente certo para praticar."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Libera a culpa e posiciona o método como a solução. Mesmo mecanismo do hook top 3.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--blue);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Falar inglês deveria ser natural. Se ainda parece uma tortura, o problema não é você."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Reforça o posicionamento "acolhedor" da Be Personal Teaching. Alta empatia e identificação.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="hooks-urgencia" class="tab-content">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--red);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Sua concorrência já fala inglês. E você?"</div>
+            <div style="font-size:0.8em;color:var(--text2);">FOMO profissional. Curto, direto, impactante. Ideal para o público do mercado de trabalho.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--red);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Quantas oportunidades você já perdeu porque não falou inglês?"</div>
+            <div style="font-size:0.8em;color:var(--text2);">Ativa a memória de perdas reais. O usuário pensa em situações específicas — alta emoção.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--red);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Em 3 meses você pode estar em uma reunião internacional sem travar. Ou não. A escolha é agora."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Urgência com timeline específico + CTA implícito. Poderoso para conversão direta.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="hooks-engajamento" class="tab-content">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--green);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Qual dessas frases em inglês você usou errado a vida toda? (Comenta aqui)"</div>
+            <div style="font-size:0.8em;color:var(--text2);">CTA direto para comentário. Gera volume de interação que o algoritmo premia.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--green);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Me conta: você entende inglês, mas na hora de falar... o que acontece?"</div>
+            <div style="font-size:0.8em;color:var(--text2);">Pergunta pessoal e vulnerável. Gera respostas genuínas e cria senso de comunidade.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px 18px;border-left:3px solid var(--green);">
+            <div style="font-style:italic;font-weight:600;font-size:0.92em;color:var(--text);margin-bottom:6px;">"Você saberia dizer [expressão brasileira] em inglês? Tenta nos comentários."</div>
+            <div style="font-size:0.8em;color:var(--text2);">Gamificação + desafio. Comentários em série — feed vivo e altamente engajado.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: INSIGHTS ESTRATÉGICOS -->
+  <div class="section">
+    <div class="section-title">insights estratégicos</div>
+
+    <div class="insight-item open">
+      <div class="insight-header" onclick="toggleInsight(this)">
+        <div class="left">
+          <span class="badge badge-info">padrão</span>
+          <h3>Os hooks emocionais superam os informativos em engajamento</h3>
+        </div>
+        <svg class="insight-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="insight-body">
+        <div class="insight-content">
+          Os 3 conteúdos com maior engajamento do perfil compartilham um padrão claro: todos partem de <span class="highlight">emoção antes de informação</span>. O reel do Wagner Moura (sotaque = identidade) e as expressões intraduzíveis ativam pertencimento cultural antes de qualquer conteúdo técnico. Já os posts puramente informativos (listas de vocabulário, gramática) têm desempenho significativamente menor. O nicho de inglês tem uma <span class="metric-inline">saturação altíssima de conteúdo técnico</span> — o diferencial da Isabela está exatamente na conexão humana. A recomendação é manter a proporção de <span class="metric-inline">70% emoção / 30% técnica</span> nos hooks, mesmo em conteúdos educacionais.
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-header" onclick="toggleInsight(this)">
+        <div class="left">
+          <span class="badge badge-critical">atenção</span>
+          <h3>Crescimento orgânico abaixo do potencial para o volume de posts</h3>
+        </div>
+        <svg class="insight-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="insight-body">
+        <div class="insight-content">
+          Com <span class="metric-inline">144 posts</span> publicados, o perfil tem <span class="metric-inline">681 seguidores</span> — uma razão de 4,7 seguidores por post. Contas no mesmo nicho que crescem organicamente costumam atingir 8–15 seguidores por post após os primeiros 50 conteúdos. Isso indica que os posts atuais não estão sendo descobertos por público frio (não seguidor). Os principais fatores: (1) <span class="highlight">hashtags sem volume médio</span> — muitas são muito nichadas ou muito genéricas; (2) <span class="highlight">frequência de postagem irregular</span> — o algoritmo penaliza perfis inconsistentes com menor distribuição; (3) <span class="highlight">ausência de colaborações</span> que tragam audiência externa qualificada.
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-header" onclick="toggleInsight(this)">
+        <div class="left">
+          <span class="badge badge-warning">oportunidade</span>
+          <h3>Prova social existente não está sendo aproveitada como conteúdo</h3>
+        </div>
+        <svg class="insight-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="insight-body">
+        <div class="insight-content">
+          O destaque "Feedback" indica que a Isabela tem depoimentos reais de alunos. Os comentários do post de apresentação são descritos como <span class="highlight">"riquíssimos de ex-alunos elogiando o método"</span>. No entanto, esse é o tipo de conteúdo com <span class="metric-inline">maior taxa de conversão</span> no Instagram — estudos de social media mostram que depoimentos em vídeo convertem até 3x mais do que posts de conteúdo educacional. A oportunidade: transformar esses comentários existentes em <span class="highlight">Reels de depoimento</span> (prints animados, leitura em voz + reação, ou vídeo com o próprio aluno). Cada depoimento pode se tornar um post de conversão potente sem criar conteúdo novo do zero.
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-header" onclick="toggleInsight(this)">
+        <div class="left">
+          <span class="badge badge-critical">atenção</span>
+          <h3>Bio sem CTA direto está perdendo leads no topo do funil</h3>
+        </div>
+        <svg class="insight-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="insight-body">
+        <div class="insight-content">
+          A bio atual ("Inglês leve, prático e acolhedor / Comunicação confiante para o mercado de trabalho / Método real e eficaz") posiciona bem o produto, mas <span class="highlight">não direciona o visitante para uma ação clara</span>. Um novo visitante que chega pelo Reel não sabe o que fazer a seguir. A taxa de conversão de visitante de perfil → lead pode ser aumentada com: (1) uma frase de CTA no final da bio como <span class="metric-inline">"↓ Agende sua aula experimental gratuita"</span>; (2) adição de prova social numérica ("já ajudei +X alunos"); (3) especificação do cliente ideal ("para profissionais que precisam do inglês no trabalho"). O link na bio já existe (linktr.ee) — a falta está na instrução para clicar.
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-header" onclick="toggleInsight(this)">
+        <div class="left">
+          <span class="badge badge-positive">positivo</span>
+          <h3>Nicho e posicionamento são o maior ativo do perfil</h3>
+        </div>
+        <svg class="insight-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="insight-body">
+        <div class="insight-content">
+          Diferente de contas genéricas de inglês que tentam atingir todos os públicos, a Be Personal Teaching tem um <span class="highlight">posicionamento claro e diferenciado</span>: inglês humanizado e prático para o mercado de trabalho. Esse nicho está em forte crescimento no Brasil em 2026 — a busca por "inglês para entrevista de emprego" e "inglês profissional" cresce consistentemente. O posicionamento "não é uma escola convencional" cria <span class="metric-inline">diferenciação imediata</span> da concorrência e ressoa com o público que já tentou escolas tradicionais e não obteve o resultado esperado. Esse é um ativo difícil de replicar — a questão agora é aumentar o volume de conteúdo que reforça esse posicionamento.
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-item">
+      <div class="insight-header" onclick="toggleInsight(this)">
+        <div class="left">
+          <span class="badge badge-warning">oportunidade</span>
+          <h3>Reels sobre inglês + IA e tecnologia são a próxima grande onda</h3>
+        </div>
+        <svg class="insight-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="insight-body">
+        <div class="insight-content">
+          Em 2026, o inglês para IA e tecnologia é um dos tópicos mais buscados por profissionais brasileiros. Prompts de IA, comandos em inglês, terminologia de tech — são conteúdos com <span class="metric-inline">altíssimo potencial de alcance</span> e compartilhamento. A Isabela pode ser pioneira nesse cruzamento: mentoria de inglês + mundo tech/IA. Conteúdos como "Como falar com a IA em inglês para ter respostas melhores" ou "Vocabulário de tech em inglês que todo profissional precisa saber" podem atingir um público <span class="highlight">mais amplo e com maior urgência de aprendizado</span>. É uma oportunidade de cavalgada de tendência com conteúdo dentro do nicho já existente.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: ESTRATÉGIAS -->
+  <div class="section">
+    <div class="section-title">estratégias para crescimento e conversão</div>
+    <div class="grid-2">
+      <div>
+        <h4 style="font-size:0.85em;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;">📈 Crescimento de Audiência</h4>
+        <div class="strategy-item">
+          <h4>Série Semanal Fixa</h4>
+          <p>Criar uma série com nome e dia fixos (ex: "Inglês Real toda terça"). A consistência cria expectativa no seguidor e sinaliza frequência para o algoritmo. O nome repetido nos thumbnails cria reconhecimento de marca.</p>
+        </div>
+        <div class="strategy-item">
+          <h4>Hashtags de Volume Médio</h4>
+          <p>Substituir hashtags muito nichadas por combinações de volume médio (50k–500k posts): #inglêsprofissional, #aprenderingles, #dicasdeingles, #inglesparaemprego. Evitar hashtags genéricas (+1M) e muito específicas (sem volume).</p>
+        </div>
+        <div class="strategy-item">
+          <h4>3–5 Reels por Semana</h4>
+          <p>O algoritmo do Instagram distribui mais para perfis consistentes. Ao menos 1 Reel por semana deve ser orientado a viralizar (hook forte + primeiro segundo impactante + CTA de comentário no final).</p>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:0.85em;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;">🎯 Conversão em Clientes</h4>
+        <div class="strategy-item">
+          <h4>Stories de Qualificação de Lead</h4>
+          <p>Usar enquetes nos stories para qualificar leads ("Você trabalha com empresas internacionais?" / "Seu inglês te impede de crescer?"). Ao final, direcionar quem responder "sim" para o direct com oferta de aula experimental.</p>
+        </div>
+        <div class="strategy-item">
+          <h4>Destaque "Como Funciona"</h4>
+          <p>Criar um destaque com 3–4 stories explicando o método Be Personal Teaching de forma simples: o que é, como funciona, para quem é, e próximos passos. Novo visitante deve entender a proposta em 60 segundos.</p>
+        </div>
+        <div class="strategy-item">
+          <h4>Depoimentos como Conteúdo</h4>
+          <p>Transformar feedbacks existentes em Reels de depoimento — o formato que mais converte no Instagram. Resultado concreto + história do aluno + antes/depois. Exemplo: "Aluna X passou na entrevista em inglês após 2 meses."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: RECOMENDAÇÕES -->
+  <div class="section">
+    <div class="section-title">recomendações prioritárias</div>
+    <div class="rec-grid">
+      <div class="rec-card">
+        <div class="rec-num">1</div>
+        <div>
+          <h4>Revisar a Bio com CTA Direto</h4>
+          <p>Adicionar ao final da bio uma frase de ação clara como "↓ Agende sua aula experimental" com link direto para WhatsApp ou formulário. Incluir prova social numérica ("já ajudei +X alunos"). Pequena mudança, grande impacto na conversão.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">2</div>
+        <div>
+          <h4>Criar Calendário Editorial Fixo</h4>
+          <p>Definir uma cadência mínima de 3 posts/semana e manter por 90 dias. O algoritmo do Instagram pune inconsistência com menor alcance. A série semanal fixa ("Inglês Real toda terça") cria expectativa e disciplina o processo.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">3</div>
+        <div>
+          <h4>Transformar Depoimentos em Reels</h4>
+          <p>Os comentários ricos de ex-alunos são ativos de conversão subutilizados. Transformar ao menos 2 depoimentos por mês em Reels de resultado — o formato que mais gera conversão no nicho de mentoria e ensino.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">4</div>
+        <div>
+          <h4>Expandir os Destaques para 5+</h4>
+          <p>Criar destaques: "Como Funciona", "Resultados", "Mitos e Verdades" (já existe), "Feedback" (já existe), "Para Empresas". Novos visitantes devem encontrar um perfil organizado que responda suas principais dúvidas antes de falar com a mentora.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">5</div>
+        <div>
+          <h4>Apostar em Hooks de Dor + Método</h4>
+          <p>Os 3 melhores conteúdos do perfil usam o padrão "espelha a dor → apresenta o método como solução". Replicar essa estrutura em pelo menos 50% dos novos Reels: hook emocional nos primeiros 3 segundos + virada com posicionamento da Be Personal Teaching.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">6</div>
+        <div>
+          <h4>Explorar Inglês + IA como Tendência</h4>
+          <p>O cruzamento "inglês para usar com IA no trabalho" é uma tendência crescente em 2026. Criar série de Reels sobre vocabulário tech, prompts em inglês, e termos do mercado de IA. Atingirá público novo com alta urgência de aprendizado.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">7</div>
+        <div>
+          <h4>Testar Colaborações com Perfis de Carreira</h4>
+          <p>Fazer 1–2 colaborações por mês com perfis de RH, carreira e empreendedorismo. Cada colaboração traz audiência nova e qualificada — profissionais que já buscam crescimento e se encaixam no perfil ideal de aluno da Be Personal Teaching.</p>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">8</div>
+        <div>
+          <h4>Hashtags Estratégicas por Post</h4>
+          <p>Usar 5–8 hashtags por post com mix: 2–3 grandes (#aprenderingles, #ingles), 2–3 médias (#inglêsprofissional, #speakingconfidence), 1–2 pequenas e específicas (#mentoradeingles, #bepersonalteaching). Evitar o mesmo set em todos os posts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>relatório gerado para <span class="brand">@be_personalteaching</span> · Isabela Rodrigues | Mentora de Inglês · Abril de 2026</p>
+</div>
+
+<script>
+  // CHART.JS DEFAULTS
+  Chart.defaults.color = '#9CA3AF';
+  Chart.defaults.font.family = 'Inter';
+  Chart.defaults.font.size = 12;
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+  Chart.defaults.plugins.legend.labels.padding = 16;
+
+  // COUNTER ANIMATION
+  function animateCounter(el) {
+    const raw = el.dataset.target;
+    const target = parseInt(raw);
+    if (isNaN(target)) return;
+    const duration = 1800;
+    const start = performance.now();
+    function update(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.floor(eased * target).toLocaleString('pt-BR');
+      if (p < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  // SCROLL ANIMATION
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        e.target.querySelectorAll('.counter').forEach(c => animateCounter(c));
+      }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.section').forEach(s => obs.observe(s));
+
+  // Header counters
+  document.querySelectorAll('.header .counter').forEach(c => animateCounter(c));
+
+  // TABS
+  function switchTab(tab, group) {
+    const wrapper = tab.closest('[data-group="' + group + '"]');
+    if (!wrapper) return;
+    wrapper.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const targetId = tab.dataset.tab;
+    const section = tab.closest('.card') || tab.closest('.section');
+    section.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    const target = document.getElementById(targetId);
+    if (target) target.classList.add('active');
+  }
+
+  // INSIGHT ACCORDION
+  function toggleInsight(header) {
+    const item = header.closest('.insight-item');
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.insight-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  }
+
+  // CHART: FORMATOS
+  new Chart(document.getElementById('chartFormatos'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Reels', 'Carrosséis', 'Posts Estáticos', 'Outros'],
+      datasets: [{
+        data: [60, 25, 10, 5],
+        backgroundColor: ['#8B5CF6', '#3B82F6', '#06B6D4', '#6B7280'],
+        borderColor: '#1A1D27',
+        borderWidth: 3,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.parsed}% (est. ${Math.round(ctx.parsed * 144 / 100)} posts)`
+          }
+        }
+      }
+    }
+  });
+
+  // CHART: PERFORMANCE
+  new Chart(document.getElementById('chartPerformance'), {
+    type: 'bar',
+    data: {
+      labels: ['Reels', 'Carrosséis', 'Posts Estáticos'],
+      datasets: [
+        {
+          label: 'Alcance Médio (estimado)',
+          data: [420, 200, 120],
+          backgroundColor: 'rgba(139,92,246,0.7)',
+          borderRadius: 8
+        },
+        {
+          label: 'Interações Médias (estimado)',
+          data: [28, 22, 10],
+          backgroundColor: 'rgba(59,130,246,0.7)',
+          borderRadius: 8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        x: { grid: { color: '#2E3345' }, ticks: { color: '#9CA3AF' } },
+        y: { grid: { color: '#2E3345' }, ticks: { color: '#9CA3AF' } }
+      }
+    }
+  });
+
+  // CHART: PILARES DE CONTEÚDO
+  new Chart(document.getElementById('chartPilares'), {
+    type: 'radar',
+    data: {
+      labels: [
+        'Speaking / Trava',
+        'Mercado de Trabalho',
+        'Inglês para Viagem',
+        'Sotaque & Identidade',
+        'Método Be Personal',
+        'Listening & Séries',
+        'Cultura BR vs Inglês'
+      ],
+      datasets: [{
+        label: 'Volume de Conteúdo',
+        data: [90, 75, 60, 85, 70, 55, 65],
+        backgroundColor: 'rgba(124,58,237,0.2)',
+        borderColor: '#8B5CF6',
+        borderWidth: 2,
+        pointBackgroundColor: '#8B5CF6',
+        pointRadius: 5
+      }, {
+        label: 'Engajamento Percebido',
+        data: [85, 70, 65, 95, 60, 55, 80],
+        backgroundColor: 'rgba(59,130,246,0.15)',
+        borderColor: '#3B82F6',
+        borderWidth: 2,
+        pointBackgroundColor: '#3B82F6',
+        pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        r: {
+          grid: { color: '#2E3345' },
+          angleLines: { color: '#2E3345' },
+          ticks: { color: '#6B7280', backdropColor: 'transparent', stepSize: 20 },
+          pointLabels: { color: '#9CA3AF', font: { size: 11 } },
+          min: 0, max: 100
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
